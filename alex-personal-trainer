@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>AlexPersonalTrainer v4.0 – Web AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #020617;
+      --bg2: #0f172a;
+      --card: #020617;
+      --border: #1f2937;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --accent: #22c55e;
+      --danger: #f97373;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #0b1120, #020617 55%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .app { max-width: 480px; margin: 0 auto; }
+    .title { font-size: 24px; font-weight: 700; margin-top: 12px; }
+    .subtitle { font-size: 14px; color: var(--text-muted); margin-top: 4px; margin-bottom: 16px; }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.45);
+    }
+
+    .label { font-size: 14px; margin-top: 10px; margin-bottom: 4px; }
+    .input {
+      width: 100%; padding: 10px 12px;
+      border-radius: 8px; border: 1px solid var(--border);
+      background: #020617; color: var(--text); font-size: 14px;
+    }
+    .input::placeholder { color: #6b7280; }
+
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .chip {
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text);
+      background: transparent;
+    }
+    .chip.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #022c22;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      width: 100%; margin-top: 16px;
+      border-radius: 999px; padding: 12px;
+      border: none;
+      background: linear-gradient(135deg, #22c55e, #4ade80);
+      color: #022c22;
+      font-weight: 600; font-size: 15px;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      width: 100%; margin-top: 8px;
+      border-radius: 999px; padding: 10px;
+      border: 1px solid #4b5563;
+      background: transparent;
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-primary:active,
+    .btn-secondary:active { transform: scale(0.97); }
+
+    .error { color: var(--danger); font-size: 13px; margin-top: 4px; }
+
+    .summary-row { display: flex; gap: 8px; margin: 8px 0 12px; }
+    .summary-card {
+      flex: 1; background: var(--card);
+      border-radius: 10px; border: 1px solid var(--border);
+      padding: 10px;
+    }
+    .summary-label { font-size: 12px; color: var(--text-muted); }
+    .summary-value { font-size: 18px; font-weight: 700; margin-top: 4px; }
+
+    .exercise-title { font-size: 14px; font-weight: 600; }
+    .exercise-tag { font-size: 12px; color: var(--accent); margin-top: 2px; margin-bottom: 4px; }
+    .exercise-text { font-size: 12px; color: var(--text-muted); }
+
+    .list { max-height: 260px; overflow-y: auto; padding-right: 4px; }
+
+    .footer {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    @media (max-width: 400px) {
+      body { padding: 10px; }
+      .title { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- LOGIN -->
+    <div id="screen-login">
+      <div class="title">AlexPersonalTrainer v4.0</div>
+      <div class="subtitle">
+        Motor de treino inteligente rodando direto no navegador.
+      </div>
+
+      <div class="card">
+        <label class="label">Seu nome</label>
+        <input id="nome" class="input" type="text" placeholder="Digite seu nome" />
+
+        <label class="label">Você é</label>
+        <div class="row">
+          <button class="chip" id="chip-personal">Personal</button>
+          <button class="chip" id="chip-aluno">Aluno</button>
+        </div>
+
+        <div id="erro-login" class="error" style="display:none;"></div>
+
+        <button class="btn-primary" id="btn-entrar">Entrar</button>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <div id="screen-home" style="display:none;">
+      <div class="title">AlexPersonalTrainer v4.0</div>
+      <div id="subtitle-home" class="subtitle"></div>
+
+      <div class="summary-row">
+        <div class="summary-card">
+          <div class="summary-label">Treinos concluídos</div>
+          <div class="summary-value" id="treinos-concluidos">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Grupo atual</div>
+          <div class="summary-value" id="grupo-atual">Peitoral</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="label">Grupos musculares</label>
+        <div class="row" id="chips-grupos"></div>
+
+        <label class="label" style="margin-top:14px;">Treino sugerido (IA)</label>
+        <div class="list" id="lista-exercicios"></div>
+
+        <button class="btn-primary" id="btn-iniciar-treino">
+          Iniciar treino sugerido
+        </button>
+        <button class="btn-secondary" id="btn-sair">
+          Sair
+        </button>
+      </div>
+
+      <div class="card">
+        <label class="label">Histórico recente</label>
+        <div class="list" id="lista-historico"></div>
+      </div>
+    </div>
+
+    <!-- TREINO -->
+    <div id="screen-treino" style="display:none;">
+      <div class="title" id="titulo-treino">Treino</div>
+      <div id="subtitle-treino" class="subtitle"></div>
+
+      <div class="card">
+        <div class="list" id="lista-exercicios-treino"></div>
+
+        <button class="btn-primary" id="btn-concluir-treino">
+          Concluir treino
+        </button>
+        <button class="btn-secondary" id="btn-voltar-home">
+          Voltar
+        </button>
+      </div>
+    </div>
+
+    <div class="footer">
+      Dados salvos localmente. Para versão com Firebase, assinaturas e push,
+      usar backend conforme guia do AlexPersonalTrainer v3.0. [Demo HTML]
+    </div>
+  </div>
+
+  <script>
+    /* =========================
+       ALEX PERSONAL TRAINER v4.0
+       State + AI Engine + Storage
+    ========================= */
+
+    /* ========= STATE ========= */
+
+    const AppState = {
+      user: null,
+      grupoSelecionado: "Peitoral",
+      treinoAtual: [],
+      treinosConcluidos: 0,
+      historico: [] // [{data, grupo, exercicios:[ids]}]
+    };
+
+    const STORAGE_KEY = "alex_v4_data";
+
+    /* ========= DATABASE ========= */
+
+    const EXERCICIOS = [
+      { id:"supino_reto_barra", grupo:"Peitoral", nome:"Supino reto com barra", tipo:"Compósito principal", musculos:"Peitoral maior, tríceps", series:3, reps:"8–12" },
+      { id:"supino_inclinado", grupo:"Peitoral", nome:"Supino inclinado", tipo:"Compósito acessório", musculos:"Peitoral superior", series:3, reps:"10–12" },
+      { id:"crucifixo", grupo:"Peitoral", nome:"Crucifixo", tipo:"Isolamento", musculos:"Peitoral maior", series:3, reps:"12–15" },
+
+      { id:"barra_fixa", grupo:"Costas", nome:"Barra fixa", tipo:"Compósito principal", musculos:"Dorsal", series:3, reps:"6–10" },
+      { id:"remada", grupo:"Costas", nome:"Remada curvada", tipo:"Compósito acessório", musculos:"Dorsal", series:3, reps:"8–12" },
+      { id:"pulldown", grupo:"Costas", nome:"Pulldown", tipo:"Isolamento", musculos:"Dorsal", series:3, reps:"12–15" },
+
+      { id:"agachamento", grupo:"Pernas", nome:"Agachamento", tipo:"Compósito principal", musculos:"Quadríceps", series:3, reps:"6–10" },
+      { id:"leg_press", grupo:"Pernas", nome:"Leg press", tipo:"Compósito acessório", musculos:"Quadríceps", series:3, reps:"10–12" },
+      { id:"stiff", grupo:"Pernas", nome:"Stiff", tipo:"Isolamento", musculos:"Posterior", series:3, reps:"12–15" }
+    ];
+
+    const GRUPOS = ["Peitoral","Costas","Pernas"];
+
+    /* ========= STORAGE ========= */
+
+    function saveState(){
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(AppState));
+      } catch (e) {
+        console.log("Erro ao salvar estado:", e);
+      }
+    }
+
+    function loadState(){
+      try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        if(data){
+          const parsed = JSON.parse(data);
+          // Mesclar com defaults, evitando undefined
+          AppState.user = parsed.user || null;
+          AppState.grupoSelecionado = parsed.grupoSelecionado || "Peitoral";
+          AppState.treinoAtual = Array.isArray(parsed.treinoAtual) ? parsed.treinoAtual : [];
+          AppState.treinosConcluidos = parsed.treinosConcluidos || 0;
+          AppState.historico = Array.isArray(parsed.historico) ? parsed.historico : [];
+        }
+      } catch (e) {
+        console.log("Erro ao carregar estado:", e);
+      }
+    }
+
+    /* ========= AI ENGINE ========= */
+
+    function randomItem(arr){
+      if(!arr || arr.length === 0) return null;
+      return arr[Math.floor(Math.random()*arr.length)];
+    }
+
+    function evitarRepeticao(candidatos){
+      // pega ids de exercícios dos últimos 2 treinos
+      const ultimos = AppState.historico
+        .slice(-2)
+        .flatMap(t => t.exercicios || []);
+      if(ultimos.length === 0) return candidatos;
+      const filtrados = candidatos.filter(e => !ultimos.includes(e.id));
+      return filtrados.length > 0 ? filtrados : candidatos;
+    }
+
+    function gerarTreinoIA(grupo){
+      const grupoEx = EXERCICIOS.filter(e=>e.grupo === grupo);
+
+      const principais = grupoEx.filter(e=>e.tipo === "Compósito principal");
+      const acessorios = grupoEx.filter(e=>e.tipo === "Compósito acessório");
+      const isolamentos = grupoEx.filter(e=>e.tipo === "Isolamento");
+
+      const treino = [];
+
+      const principal = randomItem(evitarRepeticao(principais));
+      const acessorio = randomItem(evitarRepeticao(acessorios));
+      const isolamento = randomItem(evitarRepeticao(isolamentos));
+
+      if(principal) treino.push(principal);
+      if(acessorio) treino.push(acessorio);
+      if(isolamento) treino.push(isolamento);
+
+      return treino;
+    }
+
+    /* ========= UI HELPERS ========= */
+
+    const screenLogin = document.getElementById("screen-login");
+    const screenHome = document.getElementById("screen-home");
+    const screenTreino = document.getElementById("screen-treino");
+
+    const nomeInput = document.getElementById("nome");
+    const erroLogin = document.getElementById("erro-login");
+    const chipPersonal = document.getElementById("chip-personal");
+    const chipAluno = document.getElementById("chip-aluno");
+    const btnEntrar = document.getElementById("btn-entrar");
+
+    const subtitleHome = document.getElementById("subtitle-home");
+    const subtitleTreino = document.getElementById("subtitle-treino");
+    const tituloTreino = document.getElementById("titulo-treino");
+    const treinosConcluidosEl = document.getElementById("treinos-concluidos");
+    const grupoAtualEl = document.getElementById("grupo-atual");
+    const chipsGruposEl = document.getElementById("chips-grupos");
+    const listaExerciciosEl = document.getElementById("lista-exercicios");
+    const listaExerciciosTreinoEl = document.getElementById("lista-exercicios-treino");
+    const listaHistoricoEl = document.getElementById("lista-historico");
+    const btnIniciarTreino = document.getElementById("btn-iniciar-treino");
+    const btnSair = document.getElementById("btn-sair");
+    const btnConcluirTreino = document.getElementById("btn-concluir-treino");
+    const btnVoltarHome = document.getElementById("btn-voltar-home");
+
+    let tipoUsuario = null; // "personal" | "aluno"
+
+    function showScreen(name){
+      screenLogin.style.display = name === "login" ? "block" : "none";
+      screenHome.style.display = name === "home" ? "block" : "none";
+      screenTreino.style.display = name === "treino" ? "block" : "none";
+    }
+
+    function renderLista(container, lista){
+      container.innerHTML = "";
+      lista.forEach(item=>{
+        const div = document.createElement("div");
+        div.className = "card";
+        div.style.marginBottom = "8px";
+        div.style.boxShadow = "none";
+
+        const title = document.createElement("div");
+        title.className = "exercise-title";
+        title.textConte
+
